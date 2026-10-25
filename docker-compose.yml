@@ -1,0 +1,23 @@
+services:
+  facturation_electronique_db:
+    image: postgres:16
+    container_name: facturation_electronique_db
+    environment:
+      POSTGRES_USER: odoo
+      POSTGRES_PASSWORD: odoo
+      POSTGRES_DB: postgres
+    volumes:
+      - ./odoo_db:/var/lib/postgresql/data
+
+  facturation_electronique:
+    image: odoo:18.0
+    container_name: facturation_electronique
+    depends_on:
+      - facturation_electronique_db
+    ports:
+      - 18009:8069
+    volumes:
+      - ./odoo_data:/var/lib/odoo
+      - ./config:/etc/odoo
+      - ./addons:/mnt/extra-addons
+    command: -- --dev xml,qweb,werkzeug

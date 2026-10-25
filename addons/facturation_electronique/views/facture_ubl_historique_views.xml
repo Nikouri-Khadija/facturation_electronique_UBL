@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Historique des fichiers XML UBL : lecture seule -->
+    <record id="view_facture_ubl_historique_list" model="ir.ui.view">
+        <field name="name">facturation_electronique.historique.list</field>
+        <field name="model">facturation_electronique.historique</field>
+        <field name="arch" type="xml">
+            <list create="0" edit="0" delete="0">
+                <field name="date_generation"/>
+                <field name="facture_id"/>
+                <field name="partner_id"/>
+                <field name="montant_total"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="utilisateur_id" widget="many2one_avatar_user"/>
+                <field name="fichier_nom"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <button name="action_telecharger" type="object" string="Télécharger" icon="fa-download"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_facture_ubl_historique_form" model="ir.ui.view">
+        <field name="name">facturation_electronique.historique.form</field>
+        <field name="model">facturation_electronique.historique</field>
+        <field name="arch" type="xml">
+            <form create="0" edit="0" delete="0">
+                <header>
+                    <button name="action_telecharger" type="object" string="Télécharger" class="oe_highlight"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="facture_id"/>
+                            <field name="partner_id"/>
+                            <field name="montant_total"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                        <group>
+                                        <field name="date_generation"/>
+                            <field name="utilisateur_id"/>
+                            <field name="fichier" filename="fichier_nom"/>
+                            <field name="fichier_nom" invisible="1"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_facture_ubl_historique_search" model="ir.ui.view">
+        <field name="name">facturation_electronique.historique.search</field>
+        <field name="model">facturation_electronique.historique</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="facture_id"/>
+                <field name="partner_id"/>
+                <field name="utilisateur_id"/>
+                <filter name="date_generation" string="Date de génération" date="date_generation"/>
+                <group>
+                    <filter name="group_facture" string="Facture" context="{'group_by': 'facture_id'}"/>
+                    <filter name="group_client" string="Client" context="{'group_by': 'partner_id'}"/>
+                    <filter name="group_utilisateur" string="Généré par" context="{'group_by': 'utilisateur_id'}"/>
+                    <filter name="group_date" string="Date de génération" context="{'group_by': 'date_generation'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_facture_ubl_historique" model="ir.actions.act_window">
+        <field name="name">Historique XML UBL</field>
+        <field name="res_model">facturation_electronique.historique</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_empty_folder">Aucun fichier XML UBL généré</p>
+            <p>Les fichiers apparaissent ici à chaque clic sur « Générer facture UBL » d'une facture client comptabilisée.</p>
+        </field>
+    </record>
+
+    <!-- Menu principal « Facturation électronique » -->
+    <menuitem id="menu_facturation_electronique_racine"
+              name="Facturation électronique"
+              web_icon="account,static/description/icon.png"
+              groups="account.group_account_invoice"
+              sequence="45"/>
+
+    <menuitem id="menu_facture_ubl_historique"
+              name="Historique XML UBL"
+              parent="menu_facturation_electronique_racine"
+              action="action_facture_ubl_historique"
+              sequence="10"/>
+
+</odoo>

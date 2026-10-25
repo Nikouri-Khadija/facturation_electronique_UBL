@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Partie (vendeur ou client) : nom, adresse, ICE / IF, contact -->
+    <template id="facture_ubl_partie">
+        <cac:Party xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"
+                   xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2">
+            <cac:PartyName>
+                <cbc:Name t-out="partie['nom']"/>
+            </cac:PartyName>
+            <cac:PostalAddress>
+                <cbc:StreetName t-if="partie['rue']" t-out="partie['rue']"/>
+                <cbc:CityName t-if="partie['ville']" t-out="partie['ville']"/>
+                <cbc:PostalZone t-if="partie['code_postal']" t-out="partie['code_postal']"/>
+                <cac:Country>
+                    <cbc:IdentificationCode t-out="partie['pays']"/>
+                </cac:Country>
+            </cac:PostalAddress>
+            <cac:PartyTaxScheme t-if="partie['ice']">
+                <cbc:CompanyID t-out="'%s%s' % (partie['pays'], partie['ice'])"/>
+                <cac:TaxScheme>
+                    <cbc:ID>VAT</cbc:ID>
+                </cac:TaxScheme>
+            </cac:PartyTaxScheme>
+            <cac:PartyTaxScheme t-if="partie['if']">
+                <cbc:CompanyID t-out="partie['if']"/>
+                <cac:TaxScheme>
+                    <cbc:ID>IF</cbc:ID>
+                </cac:TaxScheme>
+            </cac:PartyTaxScheme>
+            <cac:PartyLegalEntity>
+                <cbc:RegistrationName t-out="partie['nom']"/>
+                <cbc:CompanyID t-if="partie['ice']" t-out="partie['ice']"/>
+            </cac:PartyLegalEntity>
+            <cac:Contact t-if="partie['telephone'] or partie['email']">
+                <cbc:Telephone t-if="partie['telephone']" t-out="partie['telephone']"/>
+                <cbc:ElectronicMail t-if="partie['email']" t-out="partie['email']"/>
+            </cac:Contact>
+        </cac:Party>
+    </template>
+
+    <!-- Facture UBL 2.1 (EN 16931 / Peppol BIS Billing 3.0) -->
+    <template id="facture_ubl">
+        <Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
+                 xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"
+                 xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2">
+            <cbc:CustomizationID>urn:cen.eu:en16931:2017#compliant#urn:fdc:peppol.eu:2017:poacc:billing:01:1.0</cbc:CustomizationID>
+            <cbc:ProfileID>urn:fdc:peppol.eu:2017:poacc:billing:01:1.0</cbc:ProfileID>
+            <cbc:ID t-out="facture['numero']"/>
+            <cbc:IssueDate t-out="facture['date']"/>
+            <cbc:DueDate t-if="facture['echeance']" t-out="facture['echeance']"/>
+            <cbc:InvoiceTypeCode t-out="facture['type_code']"/>
+            <cbc:DocumentCurrencyCode t-out="devise"/>
+            <cac:AccountingSupplierParty>
+                <t t-call="facturation_electronique.facture_ubl_partie">
+                    <t t-set="partie" t-value="vendeur"/>
+                </t>
+            </cac:AccountingSupplierParty>
+            <cac:AccountingCustomerParty>
+                <t t-call="facturation_electronique.facture_ubl_partie">
+                    <t t-set="partie" t-value="client"/>
+                </t>
+            </cac:AccountingCustomerParty>
+            <cac:TaxTotal>
+                <cbc:TaxAmount t-att-currencyID="devise" t-out="totaux['tva']"/>
+                <cac:TaxSubtotal t-foreach="taxes" t-as="taxe">
+                    <cbc:TaxableAmount t-att-currencyID="devise" t-out="taxe['base']"/>
+                    <cbc:TaxAmount t-att-currencyID="devise" t-out="taxe['montant']"/>
+                    <cac:TaxCategory>
+                        <cbc:ID t-out="taxe['categorie']"/>
+                        <cbc:Percent t-out="taxe['taux']"/>
+                        <cac:TaxScheme>
+                            <cbc:ID>VAT</cbc:ID>
+                        </cac:TaxScheme>
+                    </cac:TaxCategory>
+                </cac:TaxSubtotal>
+            </cac:TaxTotal>
+            <cac:LegalMonetaryTotal>
+                <cbc:LineExtensionAmount t-att-currencyID="devise" t-out="totaux['ht']"/>
+                <cbc:TaxExclusiveAmount t-att-currencyID="devise" t-out="totaux['ht']"/>
+                <cbc:TaxInclusiveAmount t-att-currencyID="devise" t-out="totaux['ttc']"/>
+                <cbc:PayableAmount t-att-currencyID="devise" t-out="totaux['ttc']"/>
+            </cac:LegalMonetaryTotal>
+            <cac:InvoiceLine t-foreach="lignes" t-as="ligne">
+                <cbc:ID t-out="ligne_index + 1"/>
+                <cbc:InvoicedQuantity unitCode="C62" t-out="ligne['quantite']"/>
+                <cbc:LineExtensionAmount t-att-currencyID="devise" t-out="ligne['montant_ht']"/>
+                <cac:Item>
+                    <cbc:Name t-out="ligne['nom']"/>
+                    <cac:ClassifiedTaxCategory>
+                        <cbc:ID t-out="ligne['categorie']"/>
+                        <cbc:Percent t-out="ligne['taux']"/>
+                        <cac:TaxScheme>
+                            <cbc:ID>VAT</cbc:ID>
+                        </cac:TaxScheme>
+                    </cac:ClassifiedTaxCategory>
+                </cac:Item>
+                <cac:Price>
+                    <cbc:PriceAmount t-att-currencyID="devise" t-out="ligne['prix_unitaire']"/>
+                </cac:Price>
+            </cac:InvoiceLine>
+        </Invoice>
+    </template>
+
+</odoo>

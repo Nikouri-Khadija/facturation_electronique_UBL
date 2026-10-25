@@ -1,0 +1,2 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_facture_ubl_historique_user,facturation_electronique.historique.user,model_facturation_electronique_historique,account.group_account_invoice,1,0,1,0
